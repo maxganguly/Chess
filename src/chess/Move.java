@@ -10,19 +10,31 @@ public class Move {
 	private boolean enpassant;
 	private boolean captures;
 	private Piecetype promotes;
-	public Move(int[] from, int[] to, Piecetype piece, boolean takes, boolean enpassant, Piecetype promotesto) {
+	private boolean causesCheck;
+	/**
+	 * 
+	 * @param from from where is the piece moving
+	 * @param to where is the piece moving to
+	 * @param piece What Type of piece is moving
+	 * @param takes does this move capture a piece of the opponent
+	 * @param enpassant does this move use en passant
+	 * @param causesCheck does the Move check the other King
+	 * @param promotesto the Piecetype to promote to, must be the same team as the piece which will be promoted
+	 */
+	public Move(int[] from, int[] to, Piecetype piece, boolean takes, boolean enpassant,boolean causesCheck, Piecetype promotesto) {
 		this.from = new int[] {from[0],from[1]};
 		this.to = new int[] {to[0],to[1]};
 		this.piece = piece;
 		this.enpassant = enpassant;
 		this.captures = takes;
-		this.promotes = promotes;
+		this.causesCheck = causesCheck;
+		this.promotes = promotesto;
 	}
 	/**
 	 * Generates a move based on the Long algebraic chess notation
 	 * and the addition e. p. for en passant
 	 * and the addition of /<PromotedPieceCharacter> 
-	 * @param lacn <PieceLetter><Position><{-,x move or capture}><newPosition>{/<newcharacter>, "e. p."}
+	 * @param lacn <PieceLetter><Position><{-,x move or capture}><newPosition>{/<newcharacter>,"+" "e. p."}
 	 */
 	public Move(String lacn) {
 		for(Piecetype p : Control.Piecetype.values()) {
@@ -47,14 +59,15 @@ public class Move {
 			}
 		}
 		this.enpassant = lacn.contains("e. p.");
+		this.causesCheck = lacn.contains("+");
 			
 	}
 	public String getLacn() {
-		return piece.letter+Model.chessPos(from)+(captures?'x':'-')+(Model.chessPos(to))+(promotes != null?"/"+promotes.letter:"")+(enpassant?"e. p.":"");
+		return piece.letter+Model.chessPos(from)+(captures?'x':'-')+(Model.chessPos(to))+(causesCheck?"+":"")+(promotes != null?"/"+promotes.letter:"")+(enpassant?"e. p.":"");
 	}
 	@Override
 	public String toString() {
-		return piece.name()+"from "+Model.chessPos(from)+" to "+Model.chessPos(to);
+		return piece.name()+" from "+Model.chessPos(from)+" to "+Model.chessPos(to);
 	}
 	public int[] to() {
 		return new int[]{to[0],to[1]};
@@ -62,6 +75,10 @@ public class Move {
 	public int[] from() {
 		return new int[]{from[0],from[1]};
 	}
+	/**
+	 * Sets the piecetype the current piece will be promoted after the Move
+	 * @param pt the Piecetype to promote to, must be the same team as the piece which will be promoted
+	 */
 	public void setPromotion(Piecetype pt) {
 		this.promotes = pt;
 	}
@@ -73,5 +90,11 @@ public class Move {
 	}
 	public boolean getEnPassant() {
 		return this.enpassant;
+	}
+	public boolean causesCheck() {
+		return causesCheck;
+	}
+	public void causesCheck(boolean causesCheck) {
+		this.causesCheck = causesCheck;
 	}
 }

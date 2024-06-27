@@ -82,7 +82,7 @@ public class View extends JFrame{
 		setSize(fieldsize*(width+1), fieldsize*(height+1));
 	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.white = Color.WHITE;
-		this.dark = Color.DARK_GRAY;
+		this.dark = Color.LIGHT_GRAY;
 		this.choosefield = Color.GREEN;
 		this.font = panel.getFont().deriveFont(50.0f);
 		init();
@@ -192,13 +192,6 @@ public class View extends JFrame{
 				if(e.getKeyCode() == KeyEvent.VK_R) {
 					c.restart();
 				}
-				if(e.getKeyCode() == KeyEvent.VK_LEFT) {
-					c.undo();
-				}
-				if(e.getKeyCode() == KeyEvent.VK_RIGHT) {
-					c.redo();
-				}
-				
 			}
 		});
 	}
@@ -252,6 +245,21 @@ public class View extends JFrame{
 		}
 		return null;
 		
+	}
+	public int gameOver(Team winner) {
+		String text = (winner == Team.NONE)?"Draw \nplay again?":"Player: "+winner.toString()+" won\nplay again?";
+		return JOptionPane.showOptionDialog(this, text, "Game over", JOptionPane.YES_NO_OPTION, 0, null,new String[]{"Play again","Exit"},"Play again");
+	}
+	public boolean targetofMove(int x, int y) {
+		if(lastoptions == null)
+			return false;
+		int[] to;
+		for(Move m : lastoptions) {
+			to = m.to();
+			if(x == to[0] && y == to[1])
+				return true;
+		}
+		return false;
 	}
 
 }

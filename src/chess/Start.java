@@ -2,6 +2,8 @@ package chess;
 
 import java.util.Arrays;
 
+import chess.Control.Piecetype.Team;
+
 public class Start {
 
 
@@ -9,8 +11,9 @@ public class Start {
 		// TODO Auto-generated method stub
 		Model m = new Model();
 		View v = new View();
-		int[] pos = new int[] {3,4};
-		Control c = new Control(m,v);
+		Chessbot cbb = new RandomChessbot(m, Team.BLACK);
+		Chessbot cbw = new RandomChessbot(m, Team.WHITE);
+		Control c = new Control(m,v, cbw, cbb);
 	}
 
 }

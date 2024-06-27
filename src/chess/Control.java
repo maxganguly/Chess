@@ -11,6 +11,9 @@ public class Control {
 	private View v;
 	private List<Move> lm;
 	private Team currentPlayer;
+	private Chessbot aiWhite, aiDark;
+	private boolean allowPLayer;
+	private boolean end;
 	public enum Piecetype{
 		INVALID(-1,"Invalid","\u26A0",(char)0,Team.NONE,false,false,false),
 		EMPTY(0,"Empty Space","",' ',Team.NONE,false,false,false),
@@ -55,59 +58,138 @@ public class Control {
 		this.v = v;
 		v.ConnectWithController(this);
 		currentPlayer = Team.WHITE;
+		allowPLayer = true;
 		v.playground(m.getStartSetup());
+	}
+	public Control(Model m, View v, Chessbot aiWhite, Chessbot aiDark) {
+		this.m = m;
+		this.v = v;
+		v.ConnectWithController(this);
+		currentPlayer = Team.WHITE;
+		allowPLayer = true;
+
+		if(aiWhite != null && aiWhite.getTeam() == Team.WHITE)
+			this.aiWhite = aiWhite;
+		if(aiDark != null && aiDark.getTeam() == Team.BLACK)
+			this.aiDark = aiDark;
+		v.playground(m.getStartSetup());
+		if(aiWhite != null && aiDark!= null) {
+			allowPLayer = false;
+			Move move;
+			int result;
+			while(true) {
+				if(end) {
+					try {
+						Thread.sleep(1000);
+						continue;
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				move = (currentPlayer== Team.WHITE)?aiWhite.getMove():aiDark.getMove();
+				currentPlayer = (currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK;
+				result = m.isCheckmate(currentPlayer);
+				m.move(move);
+				v.playground(m.getBoard());
+				System.out.println(move.getLacn());
+				if(result != -1) {
+					end = true;
+					if(result == 0) {
+						System.out.println("Draw");
+					}else {
+						System.out.println((currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK+" Won");
+					}
+				}
+				
+				/*
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				*/
+			}
+		}
 	}
 	
 	public void clicked(int x, int y) {
 		//System.out.println(x+":"+y);
+		if(!allowPLayer)
+			return;
 		m.choose(x,y);
-		if(m.getPieceOn(x, y).team != currentPlayer && lm == null)
+		System.out.println(currentPlayer);
+		if(m.getPieceOn(x, y).team != currentPlayer && !v.targetofMove(x, y))
 			return;
 		int[] temp;
 		if(lm != null && lm.size() != 0)
 			for(Move move : lm) {
 				temp = move.to();
 				if(temp[0] == x && temp[1] == y) {
-					System.out.println("Move"+move.toString());
 					if(move.getPiece() == Piecetype.DARK_PAWN && temp[1] == 7 && move.getPromotion() == null) {
 						move.setPromotion(v.promote(currentPlayer));
 					}else if(move.getPiece() == Piecetype.WHITE_PAWN && temp[1] == 0 && move.getPromotion() == null) {
 						move.setPromotion(v.promote(currentPlayer));
 					}
+					
 					m.move(move);
 					v.playground(m.getBoard());
 					lm = null;
 					v.showMoves(lm);
 					currentPlayer = (currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK;
+					//move.causesCheck(m.isCheck(currentPlayer));
+					int result = m.isCheckmate(currentPlayer);
+					if(result != -1) {
+						end = true;
+						if(result == 0) {
+							System.out.println("Draw");
+						}else {
+							System.out.println((currentPlayer==Team.BLACK)?Team.WHITE+" Won":Team.BLACK+" Won");
+						}
+					}
+					System.out.println(move.getLacn());
+					if(currentPlayer == Team.WHITE && aiWhite != null) {
+						move = aiWhite.getMove();
+						currentPlayer = Team.BLACK;
+						result = m.isCheckmate(currentPlayer);
+						v.playground(m.getBoard());
+						System.out.println(move.getLacn());
+					}else if(currentPlayer == Team.BLACK && aiDark != null) {
+						move = aiDark.getMove();
+						currentPlayer = Team.WHITE;
+						result = m.isCheckmate(currentPlayer);
+						v.playground(m.getBoard());
+						System.out.println(move.getLacn());
+					}
+					
 					return;
 				}
 			}
 		
 		lm = m.getLegalMoves();
-		Iterator<Move> li = lm.iterator();
-		Move move;
-		Piecetype[][] board;
-		while(li.hasNext()) {
-			move = li.next();
-			board = m.trymove(move);
-			if(Model.isCheck(currentPlayer, board)) {
-				//System.out.println("Removing "+move.toString()+" from the possible moves as it would result in check of own king");
-				li.remove();
-			
+		if(lm.isEmpty()) {
+			int result = m.isCheckmate(currentPlayer);
+			if(result != -1) {
+				
 			}
 		}
 		
 		v.showMoves(lm);
 	}
 	public void restart() {
-		v.playground(m.getStartSetup());
+		m.loadfromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+		v.playground(m.getBoard());
+		end = false;
 	}
+	//*
 	public void undo() {
-		m.undo();
+		m.undo();		
+		currentPlayer = (currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK;
 		v.playground(m.getBoard());
 	}
 	public void redo() {
 		m.redo();
+		currentPlayer = (currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK;
 		v.playground(m.getBoard());
 	}
+	//*/
 }
