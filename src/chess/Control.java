@@ -17,13 +17,13 @@ public class Control {
 	public enum Piecetype{
 		INVALID(-1,"Invalid","\u26A0",(char)0,Team.NONE,false,false,false),
 		EMPTY(0,"Empty Space","",' ',Team.NONE,false,false,false),
-		WHITE_KING(1,"White King","\u2654",'K',Team.WHITE,true,true,true),
+		WHITE_KING(1,"White King","\u2654",'K',Team.WHITE,false,false,true),
 		WHITE_QUEEN(2,"White Queen","\u2655",'Q',Team.WHITE,true,true,false),
 		WHITE_ROOK(3,"White Rook","\u2656",'R',Team.WHITE,false,true,false),
 		WHITE_BISHOP(4,"White Bishop","\u2657",'B',Team.WHITE,true,false,false),
 		WHITE_KNIGHT(5,"White Knight","\u2658",'N',Team.WHITE,false,false,true),
 		WHITE_PAWN(6,"White Pawn","\u2659",'P',Team.WHITE,false,false,true),
-		DARK_KING(7,"Dark King","\u265A",'K',Team.BLACK,true,true,true),
+		DARK_KING(7,"Dark King","\u265A",'K',Team.BLACK,false,false,true),
 		DARK_QUEEN(8,"Dark Queen","\u265B",'Q',Team.BLACK,true,true,false),
 		DARK_ROOK(9,"Dark Rook","\u265C",'R',Team.BLACK,false,true,false),
 		DARK_BISHOP(10,"Dark Bishop","\u265D",'B',Team.BLACK,true,false,false),
@@ -101,23 +101,23 @@ public class Control {
 					}
 				}
 				
-				/*
+				//*
 				try {
-					Thread.sleep(500);
+					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				*/
+				//*/
 			}
 		}
 	}
 	
 	public void clicked(int x, int y) {
 		//System.out.println(x+":"+y);
-		if(!allowPLayer)
+		if(!allowPLayer || end)
 			return;
 		m.choose(x,y);
-		System.out.println(currentPlayer);
+		//System.out.println(currentPlayer);
 		if(m.getPieceOn(x, y).team != currentPlayer && !v.targetofMove(x, y))
 			return;
 		int[] temp;
@@ -142,25 +142,46 @@ public class Control {
 						end = true;
 						if(result == 0) {
 							System.out.println("Draw");
+							result = v.gameOver(Team.NONE);
 						}else {
 							System.out.println((currentPlayer==Team.BLACK)?Team.WHITE+" Won":Team.BLACK+" Won");
+							result = v.gameOver((currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK);
 						}
+						if(result == 0)
+							restart();
+						return;
 					}
 					System.out.println(move.getLacn());
 					if(currentPlayer == Team.WHITE && aiWhite != null) {
+						System.out.println("AI Move White");
 						move = aiWhite.getMove();
 						currentPlayer = Team.BLACK;
+						m.move(move);
 						result = m.isCheckmate(currentPlayer);
 						v.playground(m.getBoard());
 						System.out.println(move.getLacn());
 					}else if(currentPlayer == Team.BLACK && aiDark != null) {
+						System.out.println("AI Move Black");
 						move = aiDark.getMove();
 						currentPlayer = Team.WHITE;
+						m.move(move);
 						result = m.isCheckmate(currentPlayer);
 						v.playground(m.getBoard());
 						System.out.println(move.getLacn());
 					}
-					
+					if(result != -1) {
+						end = true;
+						if(result == 0) {
+							System.out.println("Draw");
+							result = v.gameOver(Team.NONE);
+						}else {
+							System.out.println((currentPlayer==Team.BLACK)?Team.WHITE+" Won":Team.BLACK+" Won");
+							result = v.gameOver((currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK);
+						}
+						if(result == 0)
+							restart();
+						return;
+					}
 					return;
 				}
 			}
@@ -176,8 +197,9 @@ public class Control {
 		v.showMoves(lm);
 	}
 	public void restart() {
-		m.loadfromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+		m = Model.loadfromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 		v.playground(m.getBoard());
+		currentPlayer = Team.WHITE;
 		end = false;
 	}
 	//*

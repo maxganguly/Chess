@@ -22,7 +22,7 @@ public class Model {
 	private int[] whitekingpos, darkkingpos;
 	public Model() {
 		this(getStartSetup());
-		
+		this.rochade = 0b1111;
 	}
 
 	public Model(Model m, boolean copyundo) {
@@ -298,8 +298,10 @@ public class Model {
 		return pt;
 	}
 
-	public void loadfromFen(String fen) {
+	public static Model loadfromFen(String fen) {
+		
 		Piecetype[][] board = new Piecetype[8][8];
+		int[][] kingpos = new int[2][2];
 		char c;
 		int x = 0;
 		int y = 0;
@@ -361,6 +363,7 @@ public class Model {
 			}
 			x++;
 		}
+		Model m = new Model(board);
 		c = fen.charAt(++i);
 		if(c=='w')
 			System.out.println("White starts");
@@ -370,16 +373,16 @@ public class Model {
 		while((c = fen.charAt(++i)) != ' ') {
 			switch (c) {
 			case 'K':
-				this.rochade |= 0b1;
+				m.rochade |= 0b1;
 				break;
 			case 'Q':
-				this.rochade |= 0b10;
+				m.rochade |= 0b10;
 				break;
 			case 'k':
-				this.rochade |= 0b100;
+				m.rochade |= 0b100;
 				break;
 			case 'q':
-				this.rochade |= 0b1000;
+				m.rochade |= 0b1000;
 				break;
 			}
 			i++;
@@ -387,9 +390,9 @@ public class Model {
 
 		c = fen.charAt(++i);
 		if(c != '-') {
-			this.enpassant = topos(c+""+fen.charAt(++i));
+			m.enpassant = topos(c+""+fen.charAt(++i));
 		}
-		
+		return m;
 		
 	}
 
@@ -422,7 +425,7 @@ public class Model {
 
 		}
 		int[] pos = new int[] { chosen[0], chosen[1] };
-		if (pt.diagonal) {
+		if (pt.diagonal || movementspeed == 1) {
 			for (int i = 0; i < 4; i++) {
 				pos = new int[] { chosen[0], chosen[1] };
 				for (int j = 0; j < movementspeed; j++) {
@@ -444,7 +447,7 @@ public class Model {
 						pos[1]--;
 						break;// left up
 					}
-					if (pos[0] > 7 || pos[0] < 0 || pos[1] > 7 || pos[1] < 0) {
+					if (!inRange(pos[0],pos[1])) {
 						break;
 					}
 					if (pt.team == getPieceOn(pos[0], pos[1]).team) {
@@ -458,7 +461,7 @@ public class Model {
 				}
 			}
 		}
-		if (pt.orthogonal) {
+		if (pt.orthogonal || movementspeed == 1) {
 			for (int i = 0; i < 4; i++) {
 				pos = new int[] { chosen[0], chosen[1] };
 				for (int j = 0; j < movementspeed; j++) {
@@ -476,7 +479,7 @@ public class Model {
 						pos[1]--;
 						break;// up
 					}
-					if (pos[0] > 7 || pos[0] < 0 || pos[1] > 7 || pos[1] < 0) {
+					if (!inRange(pos[0],pos[1])) {
 						break;
 					}
 					if (pt.team == getPieceOn(pos[0], pos[1]).team) {
@@ -550,7 +553,7 @@ public class Model {
 							continue;
 						pos[0] = chosen[0] + i;
 						pos[1] = chosen[1] + j;
-						if (pos[0] > -1 && pos[0] < 8 && pos[1] > -1 && pos[1] < 8 && getPieceOn(pos[0],pos[1]).team != pt.team) {
+						if (inRange(pos[0],pos[1]) && getPieceOn(pos[0],pos[1]).team != pt.team) {
 							possibilities.add(new Move(chosen, pos, pt, getPieceOn(pos[0], pos[1]) != Piecetype.EMPTY,
 									false, false, null));
 						}
@@ -566,13 +569,11 @@ public class Model {
 			if ((rochade & 0b1000) == 0b1000) {
 				if (board[0][0] == Piecetype.DARK_ROOK && board[1][0] == Piecetype.EMPTY
 						&& board[2][0] == Piecetype.EMPTY && board[3][0] == Piecetype.EMPTY && !isCheck(pt.team)
-						&& !isCheck(pt.team,
-								trymove(new Move(chosen, new int[] { chosen[0] - 1, chosen[1] }, pt, false, false,
+						&& !isCheck(pt.team,trymove(new Move(chosen, new int[] { chosen[0] - 1, chosen[1] }, pt, false, false,
 										false, null)))
 						&& !isCheck(pt.team, trymove(new Move(chosen, new int[] { chosen[0] - 2, chosen[1] }, pt, false,
 								false, false, null)))) {
-					possibilities.add(
-							new Move(chosen, new int[] { chosen[0] - 2, chosen[1] }, pt, false, false, false, null));
+					possibilities.add(new Move(chosen, new int[] { chosen[0] - 2, chosen[1] }, pt, false, false, false, null));
 				}
 			} else if ((rochade & 0b0100) == 0b0100) {
 				if (board[7][0] == Piecetype.DARK_ROOK && board[6][0] == Piecetype.EMPTY
@@ -610,13 +611,12 @@ public class Model {
 		Iterator<Move> li = possibilities.iterator();
 		Move move;
 		Model model = new Model(this, false);
-		Piecetype[][] localboard;
+		//Piecetype[][] localboard;
 		while (li.hasNext()) {
 			move = li.next();
 			model.move(move,true);
 			if (model.isCheck(pt.team)) {
-				// System.out.println("Removing "+move.toString()+" from the possible moves as
-				// it would result in check of own king");
+				//System.out.println("Removing "+move.toString()+" from the possible moves as it would result in check of own king");
 				li.remove();
 			} else if (model.isCheck(pt.team == Team.WHITE ? Team.BLACK : Team.WHITE)) {
 				move.causesCheck(true);
@@ -624,16 +624,16 @@ public class Model {
 			model.undo();
 		}
 		li = possibilities.iterator();
+		/*
 		while (li.hasNext()) {
 			move = li.next();
 			localboard = trymove(move);
 			if (Model.isCheck(pt.team, localboard)) {
-				// System.out.println("Removing "+move.toString()+" from the possible moves as
-				// it would result in check of own king");
+				System.out.println("Removing "+move.toString()+" from the possible moves as it would result in check of own king");
 				li.remove();
 
 			}
-		}
+		}*/
 
 		return possibilities;
 	}
@@ -651,7 +651,7 @@ public class Model {
 		if (Kingteam == Team.NONE)
 			return false;
 		int[] pos = new int[] { 0, 0 };
-		Piecetype pt;
+		Piecetype pt = null;
 		int[] kingpos = Kingteam==Team.WHITE?whitekingpos:darkkingpos;
 		
 		// diagonal
@@ -677,19 +677,11 @@ public class Model {
 					pos[1]--;
 					break;// left up
 				}
-				if (pos[0] > 7 || pos[0] < 0 || pos[1] > 7 || pos[1] < 0) {
+				if (!inRange(pos[0],pos[1])) {
 					break;
 				}
-				if (Kingteam != getPieceOn(pos[0], pos[1]).team && getPieceOn(pos[0], pos[1]) != Piecetype.EMPTY) {
-					if (getPieceOn(pos[0], pos[1]).diagonal && getPieceOn(pos[0], pos[1]).team != Kingteam) {
-						if (((getPieceOn(pos[0], pos[1]) == Piecetype.DARK_KING && Kingteam == Team.WHITE)
-								|| (getPieceOn(pos[0], pos[1]) == Piecetype.WHITE_KING && Kingteam == Team.BLACK))) {
-						return j == 0;
-						}
-						return true;
-						
-					}
-						
+				if (Kingteam != getPieceOn(pos[0], pos[1]).team && getPieceOn(pos[0], pos[1]).diagonal) {
+					return true;
 				}
 				if (getPieceOn(pos[0], pos[1]) != Piecetype.EMPTY)
 					break;
@@ -713,16 +705,11 @@ public class Model {
 					pos[1]--;
 					break;// up
 				}
-				if (pos[0] > 7 || pos[0] < 0 || pos[1] > 7 || pos[1] < 0) {
+				if (!inRange(pos[0],pos[1])) {
 					break;
 				}
-				if (getPieceOn(pos[0], pos[1]).orthogonal && getPieceOn(pos[0], pos[1]).team != Kingteam) {
-					if (((getPieceOn(pos[0], pos[1]) == Piecetype.DARK_KING && Kingteam == Team.WHITE)
-							|| (getPieceOn(pos[0], pos[1]) == Piecetype.WHITE_KING && Kingteam == Team.BLACK))) {
-					return j == 0;
-					}
+				if (Kingteam != getPieceOn(pos[0], pos[1]).team && getPieceOn(pos[0], pos[1]).orthogonal) {
 					return true;
-					
 				}
 				if (getPieceOn(pos[0], pos[1]) != Piecetype.EMPTY)
 					break;
@@ -737,7 +724,7 @@ public class Model {
 					continue;
 				pos[0] = kingpos[0] + i;
 				pos[1] = kingpos[1] + j;
-				if (pos[0] > -1 && pos[0] < 8 && pos[1] > -1 && pos[1] < 8) {
+				if (inRange(pos[0],pos[1])) {
 					pt = getPieceOn(pos[0], pos[1]);
 					if (pt.team != Kingteam && (pt == Piecetype.DARK_KNIGHT || pt == Piecetype.WHITE_KNIGHT))
 						return true;
@@ -765,10 +752,17 @@ public class Model {
 				}
 			}
 		}
+		if(Math.abs((Kingteam==Team.WHITE?darkkingpos:whitekingpos)[0]-kingpos[0]) <2 &&
+				Math.abs((Kingteam==Team.WHITE?darkkingpos:whitekingpos)[1]-kingpos[1]) <2)
+			return true;
 		return false;
+		
 	}
 
-
+	public static boolean inRange(int x, int y) {
+		return !(x > 7 || x < 0 || y > 7 || y < 0); 
+		
+	}
 	public void undo() {
 		if (undo.size() == 0)
 			return;
@@ -777,6 +771,13 @@ public class Model {
 		for (Pos p : lpos) {
 			redolist.add(new Pos(p.x, p.y, getPieceOn(p.x, p.y)));
 			board[p.x][p.y] = p.pt;
+			if(p.pt == Piecetype.DARK_KING) {
+				darkkingpos[0] = p.x;
+				darkkingpos[1] = p.y;
+			}else if(p.pt == Piecetype.WHITE_KING) {
+				whitekingpos[0] = p.x;
+				whitekingpos[1] = p.y;
+			}
 		}
 		redo.addFirst(redolist);
 	}
@@ -789,6 +790,13 @@ public class Model {
 		for (Pos p : lpos) {
 			undolist.add(new Pos(p.x, p.y, getPieceOn(p.x, p.y)));
 			board[p.x][p.y] = p.pt;
+			if(p.pt == Piecetype.DARK_KING) {
+				darkkingpos[0] = p.x;
+				darkkingpos[1] = p.y;
+			}else if(p.pt == Piecetype.WHITE_KING) {
+				whitekingpos[0] = p.x;
+				whitekingpos[1] = p.y;
+			}
 		}
 		undo.addFirst(undolist);
 	}

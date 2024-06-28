@@ -201,6 +201,7 @@ public class View extends JFrame{
 	 * @param toset
 	 */
 	public void playground(Piecetype[][] toset) {
+		setFont(font);
 		font = font.deriveFont((float)Math.min(panel.getWidth()/width, panel.getHeight()/height));
 		for(int x = 0; x < toset.length;x++) {
 			for(int y = 0; y < toset[x].length;y++) {
@@ -233,6 +234,7 @@ public class View extends JFrame{
 		lastoptions = moves;
 	}
 	public Piecetype promote(Team team) {
+		
 		Object[] options = (team == Team.WHITE?
 					new Object[]{Piecetype.WHITE_QUEEN.symbol,Piecetype.WHITE_ROOK.symbol,Piecetype.WHITE_BISHOP.symbol,Piecetype.WHITE_KNIGHT.symbol}:
 					new Object[]{Piecetype.DARK_QUEEN.symbol,Piecetype.DARK_ROOK.symbol,Piecetype.DARK_BISHOP.symbol,Piecetype.DARK_KNIGHT.symbol});
@@ -248,7 +250,10 @@ public class View extends JFrame{
 	}
 	public int gameOver(Team winner) {
 		String text = (winner == Team.NONE)?"Draw \nplay again?":"Player: "+winner.toString()+" won\nplay again?";
-		return JOptionPane.showOptionDialog(this, text, "Game over", JOptionPane.YES_NO_OPTION, 0, null,new String[]{"Play again","Exit"},"Play again");
+		setFont(font);
+		int result = JOptionPane.showOptionDialog(this, text, "Game over", JOptionPane.YES_NO_OPTION, 0, null,new String[]{"Play again","Exit"},"Play again");
+		System.out.println(result);
+		return result;
 	}
 	public boolean targetofMove(int x, int y) {
 		if(lastoptions == null)
