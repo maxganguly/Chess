@@ -192,6 +192,12 @@ public class View extends JFrame{
 				if(e.getKeyCode() == KeyEvent.VK_R) {
 					c.restart();
 				}
+				if(e.getKeyCode() == KeyEvent.VK_LEFT) {
+					c.undo();
+				}
+				if(e.getKeyCode() == KeyEvent.VK_LEFT) {
+					c.redo();
+				}
 			}
 		});
 	}

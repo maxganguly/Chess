@@ -13,7 +13,7 @@ public class Start {
 		View v = new View();
 		Chessbot cbb = new RandomChessbot(m, Team.BLACK);
 		Chessbot cbw = new RandomChessbot(m, Team.WHITE);
-		Control c = new Control(m,v);
+		Control c = new Control(m,v,cbw,cbb);
 	}
 
 }

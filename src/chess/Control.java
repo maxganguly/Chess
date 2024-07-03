@@ -14,6 +14,7 @@ public class Control {
 	private Chessbot aiWhite, aiDark;
 	private boolean allowPLayer;
 	private boolean end;
+	
 	public enum Piecetype{
 		INVALID(-1,"Invalid","\u26A0",(char)0,Team.NONE,false,false,false),
 		EMPTY(0,"Empty Space","",' ',Team.NONE,false,false,false),
@@ -23,12 +24,12 @@ public class Control {
 		WHITE_BISHOP(4,"White Bishop","\u2657",'B',Team.WHITE,true,false,false),
 		WHITE_KNIGHT(5,"White Knight","\u2658",'N',Team.WHITE,false,false,true),
 		WHITE_PAWN(6,"White Pawn","\u2659",'P',Team.WHITE,false,false,true),
-		DARK_KING(7,"Dark King","\u265A",'K',Team.BLACK,false,false,true),
-		DARK_QUEEN(8,"Dark Queen","\u265B",'Q',Team.BLACK,true,true,false),
-		DARK_ROOK(9,"Dark Rook","\u265C",'R',Team.BLACK,false,true,false),
-		DARK_BISHOP(10,"Dark Bishop","\u265D",'B',Team.BLACK,true,false,false),
-		DARK_KNIGHT(11,"Dark Knight","\u265E",'N',Team.BLACK,false,false,true),
-		DARK_PAWN(12,"Dark Pawn","\u265F",'P',Team.BLACK,false,false,true);
+		DARK_KING(7,"Dark King","\u265A",'k',Team.BLACK,false,false,true),
+		DARK_QUEEN(8,"Dark Queen","\u265B",'q',Team.BLACK,true,true,false),
+		DARK_ROOK(9,"Dark Rook","\u265C",'r',Team.BLACK,false,true,false),
+		DARK_BISHOP(10,"Dark Bishop","\u265D",'b',Team.BLACK,true,false,false),
+		DARK_KNIGHT(11,"Dark Knight","\u265E",'n',Team.BLACK,false,false,true),
+		DARK_PAWN(12,"Dark Pawn","\u265F",'p',Team.BLACK,false,false,true);
 		
 		public final int value;
 		public final String name;
@@ -87,21 +88,31 @@ public class Control {
 					}
 				}
 				move = (currentPlayer== Team.WHITE)?aiWhite.getMove():aiDark.getMove();
-				currentPlayer = (currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK;
 				result = m.isCheckmate(currentPlayer);
-				m.move(move);
-				v.playground(m.getBoard());
-				System.out.println(move.getLacn());
+				if(move == null) {
+					System.out.println(result);
+				}
+				if(m.draw())
+					result = 0;
+				
 				if(result != -1) {
 					end = true;
 					if(result == 0) {
 						System.out.println("Draw");
 					}else {
-						System.out.println((currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK+" Won");
+						if((currentPlayer==Team.BLACK))
+							System.out.println("White won via Checkmate");
+						else
+							System.out.println("Black won via Checkmate");
 					}
+					continue;
 				}
 				
-				//*
+				System.out.println(move.getLacn());
+				m.move(move);
+				v.playground(m.getBoard());
+				currentPlayer = (currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK;
+				/*
 				try {
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
@@ -117,7 +128,7 @@ public class Control {
 		if(!allowPLayer || end)
 			return;
 		m.choose(x,y);
-		//System.out.println(currentPlayer);
+		System.out.println(currentPlayer);
 		if(m.getPieceOn(x, y).team != currentPlayer && !v.targetofMove(x, y))
 			return;
 		int[] temp;
@@ -131,7 +142,8 @@ public class Control {
 						move.setPromotion(v.promote(currentPlayer));
 					}
 					
-					m.move(move);
+					if(!m.move(move))
+						return;
 					v.playground(m.getBoard());
 					lm = null;
 					v.showMoves(lm);
@@ -144,7 +156,10 @@ public class Control {
 							System.out.println("Draw");
 							result = v.gameOver(Team.NONE);
 						}else {
-							System.out.println((currentPlayer==Team.BLACK)?Team.WHITE+" Won":Team.BLACK+" Won");
+							if((currentPlayer==Team.BLACK))
+								System.out.println("White won via Checkmate");
+							else
+								System.out.println("Black won via Checkmate");
 							result = v.gameOver((currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK);
 						}
 						if(result == 0)
@@ -155,16 +170,18 @@ public class Control {
 					if(currentPlayer == Team.WHITE && aiWhite != null) {
 						System.out.println("AI Move White");
 						move = aiWhite.getMove();
+						if(!m.move(move))
+							return;
 						currentPlayer = Team.BLACK;
-						m.move(move);
 						result = m.isCheckmate(currentPlayer);
 						v.playground(m.getBoard());
 						System.out.println(move.getLacn());
 					}else if(currentPlayer == Team.BLACK && aiDark != null) {
 						System.out.println("AI Move Black");
 						move = aiDark.getMove();
+						if(!m.move(move))
+							return;
 						currentPlayer = Team.WHITE;
-						m.move(move);
 						result = m.isCheckmate(currentPlayer);
 						v.playground(m.getBoard());
 						System.out.println(move.getLacn());
@@ -175,7 +192,10 @@ public class Control {
 							System.out.println("Draw");
 							result = v.gameOver(Team.NONE);
 						}else {
-							System.out.println((currentPlayer==Team.BLACK)?Team.WHITE+" Won":Team.BLACK+" Won");
+							if((currentPlayer==Team.BLACK))
+								System.out.println("White won via Checkmate");
+							else
+								System.out.println("Black won via Checkmate");
 							result = v.gameOver((currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK);
 						}
 						if(result == 0)
@@ -197,7 +217,8 @@ public class Control {
 		v.showMoves(lm);
 	}
 	public void restart() {
-		m = Model.loadfromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+		m.load("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
 		v.playground(m.getBoard());
 		currentPlayer = Team.WHITE;
 		end = false;

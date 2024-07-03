@@ -9,15 +9,23 @@ public interface Chessbot {
 	 */
 	public String getMoveLacn();
 	/**
-	 * Gives an legal Move
-	 * @return a Move as Object
+	 * Gives the Model the Bot decided as best
+	 * @returns the best Move the Bot found
 	 */
 	public Move getMove();
 	/**
-	 * Gives a Move to the 
-	 * @param m
+	 * Gives the Bot a move to compute (Move as Move Object)
+	 * @param m the Move the other player made
 	 */
 	public void recieveMove(Move m);
+	/**
+	 * Gives the Bot the move the other player made to compute(Move as Long Algorithmic Chess Notation)
+	 * @param move the Move the other Player made
+	 */
 	public void recieveMove(String move);
+	/**
+	 * Gives the Team the Bot is
+	 * @return either Team.BLACK or Team.WHITE
+	 */
 	public Team getTeam();
 }
