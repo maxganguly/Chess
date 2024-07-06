@@ -70,4 +70,8 @@ public class RandomChessbot implements Chessbot {
 		return this.team;
 	}
 
+	@Override
+	public void loadfromFen(String fen) {
+		this.model.load(fen);
+	}
 }

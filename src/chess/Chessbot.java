@@ -28,4 +28,9 @@ public interface Chessbot {
 	 * @return either Team.BLACK or Team.WHITE
 	 */
 	public Team getTeam();
+	/**
+	 * Load a new Board and Data from the given fen
+	 * @param fen
+	 */
+	public void loadfromFen(String fen);
 }

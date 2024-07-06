@@ -14,7 +14,7 @@ public class Control {
 	private Chessbot aiWhite, aiDark;
 	private boolean allowPLayer;
 	private boolean end;
-	
+	public static final String startFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 	public enum Piecetype{
 		INVALID(-1,"Invalid","\u26A0",(char)0,Team.NONE,false,false,false),
 		EMPTY(0,"Empty Space","",' ',Team.NONE,false,false,false),
@@ -76,8 +76,9 @@ public class Control {
 		v.playground(m.getStartSetup());
 		if(aiWhite != null && aiDark!= null) {
 			allowPLayer = false;
-			Move move;
+			Move move = null;
 			int result;
+			Chessbot currentai;
 			while(true) {
 				if(end) {
 					try {
@@ -87,7 +88,11 @@ public class Control {
 						e.printStackTrace();
 					}
 				}
-				move = (currentPlayer== Team.WHITE)?aiWhite.getMove():aiDark.getMove();
+				currentai = (currentPlayer== Team.WHITE)?aiWhite:aiDark;
+				if(move != null) {
+					currentai.recieveMove(move);
+				}
+				move = currentai.getMove();
 				result = m.isCheckmate(currentPlayer);
 				if(move == null) {
 					System.out.println(result);
@@ -110,11 +115,12 @@ public class Control {
 				
 				System.out.println(move.getLacn());
 				m.move(move);
+				currentai.recieveMove(move);
 				v.playground(m.getBoard());
 				currentPlayer = (currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK;
 				/*
 				try {
-					Thread.sleep(100);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -169,18 +175,22 @@ public class Control {
 					System.out.println(move.getLacn());
 					if(currentPlayer == Team.WHITE && aiWhite != null) {
 						System.out.println("AI Move White");
+						aiWhite.recieveMove(move);
 						move = aiWhite.getMove();
 						if(!m.move(move))
 							return;
+						aiWhite.recieveMove(move);
 						currentPlayer = Team.BLACK;
 						result = m.isCheckmate(currentPlayer);
 						v.playground(m.getBoard());
 						System.out.println(move.getLacn());
 					}else if(currentPlayer == Team.BLACK && aiDark != null) {
 						System.out.println("AI Move Black");
+						aiDark.recieveMove(move);
 						move = aiDark.getMove();
 						if(!m.move(move))
 							return;
+						aiDark.recieveMove(move);
 						currentPlayer = Team.WHITE;
 						result = m.isCheckmate(currentPlayer);
 						v.playground(m.getBoard());
@@ -217,8 +227,11 @@ public class Control {
 		v.showMoves(lm);
 	}
 	public void restart() {
-		m.load("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-
+		m.load(startFEN);
+		if(aiWhite != null)
+			aiWhite.loadfromFen(startFEN);
+		if(aiDark != null)
+			aiDark.loadfromFen(startFEN);
 		v.playground(m.getBoard());
 		currentPlayer = Team.WHITE;
 		end = false;
