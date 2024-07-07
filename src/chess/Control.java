@@ -247,5 +247,8 @@ public class Control {
 		currentPlayer = (currentPlayer==Team.BLACK)?Team.WHITE:Team.BLACK;
 		v.playground(m.getBoard());
 	}
+	public void printFen() {
+		System.out.println(m.getFen());
+	}
 	//*/
 }

@@ -198,6 +198,9 @@ public class View extends JFrame{
 				if(e.getKeyCode() == KeyEvent.VK_LEFT) {
 					c.redo();
 				}
+				if(e.getKeyCode() == KeyEvent.VK_P) {
+					c.printFen();
+				}
 			}
 		});
 	}

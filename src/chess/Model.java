@@ -25,6 +25,7 @@ public class Model {
 	private int[] whitekingpos, darkkingpos;
 	// Counts themoves since a pawn was moved or a piece was captured to enable
 	private int movesincePawnorcapture;
+	private int moves;
 	private Map<String, Integer> positions;
 	private Team currentplayer;
 
@@ -43,6 +44,7 @@ public class Model {
 		this.redo = new LinkedList<List<Pos>>();
 		this.positions = new HashMap<String, Integer>();
 		this.currentplayer = m.currentplayer;
+		this.moves = 1;
 		if (copyundo) {
 			this.undo.addAll(m.undo);
 			this.redo.addAll(m.redo);
@@ -52,6 +54,7 @@ public class Model {
 	// Has no casteling and enpassant rights
 	private Model(Piecetype[][] board, int[][] kingpositions) {
 		this.board = board;
+		this.moves = 1;
 		this.enpassant = new int[] { -1, -1 };
 		this.undo = new LinkedList<List<Pos>>();
 		this.redo = new LinkedList<List<Pos>>();
@@ -196,6 +199,17 @@ public class Model {
 		if (c != '-') {
 			this.enpassant = topos(c + "" + fen.charAt(++i));
 		}
+		int between = fen.lastIndexOf(' ');
+		try {
+			this.movesincePawnorcapture =Integer.parseInt(fen.substring(i, between));
+		}catch (NumberFormatException e) {
+			this.movesincePawnorcapture =0;
+		}
+		try {
+			this.moves =Integer.parseInt(fen.substring(between));
+		}catch (NumberFormatException e) {
+			this.moves =1;
+		}
 	}
 	/**
 	 * Generates a standard 8x8 Chess setup
@@ -281,6 +295,7 @@ public class Model {
 							+ " current team should be" + currentplayer.toString());
 				return false;
 			}
+		this.moves++;
 		this.currentplayer = (this.currentplayer == Team.WHITE) ? Team.BLACK : Team.WHITE;
 		if (m.getPiece() == Piecetype.WHITE_KING) {
 			whitekingpos[0] = to[0];
@@ -290,7 +305,7 @@ public class Model {
 			darkkingpos[1] = to[1];
 		}
 		if (m.captures() == true || m.getPiece() == Piecetype.DARK_PAWN || m.getPiece() == Piecetype.WHITE_PAWN) {
-			movesincePawnorcapture = 0;
+			movesincePawnorcapture = -1;
 		}
 		if (m.captures() || m.getPromotion() != null)
 			positions.clear();
@@ -491,6 +506,7 @@ public class Model {
 				if (count != 0)
 					sb.append(count);
 				sb.append(board[x][y].letter);
+				count = 0;
 			}
 			if(count != 0)
 				sb.append(count);
@@ -519,7 +535,7 @@ public class Model {
 			sb.append(chessPos(enpassant));
 		} else
 			sb.append('-');
-		sb.append(" 0 1");
+		sb.append(" "+movesincePawnorcapture+" "+moves);
 		return sb.toString();
 	}
 
