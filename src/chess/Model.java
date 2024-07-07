@@ -481,9 +481,9 @@ public class Model {
 	public String getFen() {
 		StringBuilder sb = new StringBuilder();
 		int count = 0;
-		for (int x = 0; x < board.length; x++) {
+		for (int y = 0; y < 8; y++) {
 			count = 0;
-			for (int y = 0; y < board[x].length; y++) {
+			for (int x = 0; x < 8; x++) {
 				if (board[x][y] == Piecetype.EMPTY) {
 					count++;
 					continue;
@@ -492,7 +492,9 @@ public class Model {
 					sb.append(count);
 				sb.append(board[x][y].letter);
 			}
-			if (x != 7)
+			if(count != 0)
+				sb.append(count);
+			if (y != 7)
 				sb.append("/");
 		}
 		sb.append(currentplayer == Team.WHITE ? " w " : " b ");
