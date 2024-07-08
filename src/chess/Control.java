@@ -85,25 +85,33 @@ public class Control {
 			playonTime = true;
 			time = new long[] {timeWhite.get(),timeBlack.get(),addTimePerMove};
 			JLabel[] temp = v.getTimedisplays();
-			this.timeWhite = new TimeCounter(timeWhite, Team.WHITE, temp[0], this, addTimePerMove);
-			this.timeBlack = new TimeCounter(timeBlack, Team.BLACK, temp[1], this, addTimePerMove);
+			Control c = this;
+			OnGameOver ogo = new OnGameOver() {
+				
+				@Override
+				public void gameOver(Team t) {
+					c.gameOver(t, true);
+				}
+			};
+			this.timeWhite = new TimeCounter(timeWhite, Team.WHITE, temp[0], ogo, addTimePerMove);
+			this.timeBlack = new TimeCounter(timeBlack, Team.BLACK, temp[1], ogo, addTimePerMove);
 			this.timeWhite.start();
 			this.timeBlack.start();
 		}
 		v.ConnectWithController(this);
 		currentPlayer = Team.WHITE;
 		allowPLayer = true;
-		if (aiWhite != null && aiWhite.getTeam() == Team.WHITE)
+		if (aiWhite != null)
 			this.aiWhite = aiWhite;
-		if (aiDark != null && aiDark.getTeam() == Team.BLACK)
+		if (aiDark != null)
 			this.aiDark = aiDark;
-		v.playground(Model.getStartSetup());
+		v.playground(m.getBoard());
 		if (aiWhite != null && aiDark != null) {
 			allowPLayer = false;
 			Move move = null;
 			int result;
-			Chessbot currentai;
-			TimeCounter currenttimer;
+			Chessbot currentai = null;
+			TimeCounter currenttimer =null;
 			while (true) {
 				if (end) {
 					try {
@@ -115,9 +123,11 @@ public class Control {
 				}
 
 				currentai = (currentPlayer == Team.WHITE) ? aiWhite : aiDark;
-				currenttimer = (currentPlayer == Team.WHITE) ? this.timeWhite : this.timeBlack;
-				currenttimer.startCounter();
-				if (move != null) {
+				if(playonTime) {
+					currenttimer = (currentPlayer == Team.WHITE) ? this.timeWhite : this.timeBlack;
+					currenttimer.startCounter();
+				}
+				if (move != null && aiWhite != aiDark) {
 					currentai.recieveMove(move);
 				}
 
@@ -145,11 +155,13 @@ public class Control {
 				m.move(move);
 				currentai.recieveMove(move);
 				v.playground(m.getBoard());
-				currenttimer.stopCounter();
+				if(playonTime) {
+					currenttimer.stopCounter();
+				}
 				currentPlayer = (currentPlayer == Team.BLACK) ? Team.WHITE : Team.BLACK;
-				// *
+				/*
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(10000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				} //
@@ -292,10 +304,12 @@ public class Control {
 
 	public void gameOver(Team Winner, boolean wonOnTime) {
 		end = true;
-		timeWhite.stopCounter();
-		timeBlack.stopCounter();
-		timeWhite.setTime(this.time[0]);
-		timeBlack.setTime(this.time[1]);
+		if(playonTime) {
+			timeWhite.stopCounter();
+			timeBlack.stopCounter();
+			timeWhite.setTime(this.time[0]);
+			timeBlack.setTime(this.time[1]);
+		}
 		if (Winner == Team.NONE) {
 			System.out.println("Draw");
 			v.gameOver(Winner);

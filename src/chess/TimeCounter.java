@@ -11,16 +11,16 @@ class TimeCounter extends Thread {
 	private boolean stop;
 	private Team team;
 	private JLabel label;
-	private Control c;
+	private OnGameOver ogo;
 	private long increaseOnStart;
 
-	public TimeCounter(AtomicLong counter, Team team, JLabel label, Control c, long increaseOnStart) {
+	public TimeCounter(AtomicLong counter, Team team, JLabel label, OnGameOver ogo, long increaseOnStart) {
 		this.counter = counter;
 		stop = true;
 		this.team = team;
 		this.label = label;
-		this.c = c;
 		this.increaseOnStart = increaseOnStart;
+		this.ogo = ogo;
 	}
 	public void setTime(long time) {
 		this.counter.set(time);
@@ -52,17 +52,22 @@ class TimeCounter extends Thread {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			wert = counter.get() / 1000;
+			
 			if (!stop) {
-				wert = counter.addAndGet(-100) / 1000;
+				wert = counter.addAndGet(-100);
 				if (wert <= 0) {
 					wert = 0;
-					c.gameOver(team == Team.WHITE ? Team.BLACK : Team.WHITE, true);
+					ogo.gameOver(team == Team.WHITE ? Team.BLACK : Team.WHITE);
 				}
 			}
-			// System.out.println(team.name() + ": " + (wert / 60) + ":" + (wert % 60));
-			this.label.setText(team.name() + ": " + (wert / 60) + ":" + (wert % 60));
+			if(this.label != null) {
+				wert = counter.get() / 1000;
+				this.label.setText(team.name() + ": " + (wert / 60) + ":" + (wert % 60));
+			}
 		}
 	}
 
+}
+interface OnGameOver{
+	public void gameOver(Team t);
 }

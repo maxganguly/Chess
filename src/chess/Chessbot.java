@@ -1,7 +1,5 @@
 package chess;
 
-import chess.Control.Piecetype.Team;
-
 public interface Chessbot {
 	/**
 	 * Gives an legal Move in Long Algorithmic Chess Notation
@@ -23,11 +21,6 @@ public interface Chessbot {
 	 * @param move the Move the other Player made
 	 */
 	public void recieveMove(String move);
-	/**
-	 * Gives the Team the Bot is
-	 * @return either Team.BLACK or Team.WHITE
-	 */
-	public Team getTeam();
 	/**
 	 * Load a new Board and Data from the given fen
 	 * @param fen

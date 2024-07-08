@@ -288,9 +288,12 @@ public class Model {
 		LinkedList<Pos> llpos = new LinkedList<Pos>();
 		if (checkifLegal)
 			if (!isLegalMove(m) || (m.getPiece().team != currentplayer)) {
-				if (!isLegalMove(m))
-					System.out.println(m.getLacn() + " is an Illegal Move");
-				else
+				if (!isLegalMove(m)) {
+					System.out.println(m.toString() + " is an Illegal Move");
+					int x = 0;
+					int y = 1/x;
+					
+				}else
 					System.out.println("Not the correct team current team" + m.getPiece().team.toString()
 							+ " current team should be" + currentplayer.toString());
 				return false;
@@ -1048,20 +1051,22 @@ public class Model {
 	 */
 	public boolean draw() {
 		if (movesincePawnorcapture >= 50) {
-			System.out.println("No captures or pawn movements");
+			//System.out.println("No captures or pawn movements");
 			return true;
 		}
 		for (String s : this.positions.keySet()) {
 			if (this.positions.get(s) > 2) {
-				System.out.println("Same Position was accomplished 3 times");
+				//System.out.println("Same Position was accomplished 3 times");
+				/*
 				for (String st : this.positions.keySet()) {
 					System.out.println(st+":"+this.positions.get(st));
 				}
+				*/
 				return true;
 			}
 		}
 		if (!(canwin(Team.BLACK) || canwin(Team.WHITE))) {
-			System.out.println("Neither Player has the material to win");
+			//System.out.println("Neither Player has the material to win");
 			return true;
 		}
 		return false;
@@ -1075,12 +1080,16 @@ public class Model {
 	 */
 	public boolean isLegalMove(Move m) {
 		Model model = new Model(this, false);
+		
 		for (Move move : model.getLegalMoves(m.from())) {
 			if (move.equalsIgnorePromotion(m))
 				return true;
 		}
 		return false;
 
+	}
+	public Team getCurrentPlayer() {
+		return this.currentplayer;
 	}
 }
 

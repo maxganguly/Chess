@@ -7,11 +7,11 @@ import chess.Control.Piecetype;
 import chess.Control.Piecetype.Team;
 
 public class RandomChessbot implements Chessbot {
-	public Model model;
-	public Team team;
-	public RandomChessbot(Model m, Team team) {
-		this.model = m;
-		this.team = team;
+	private Model model;
+	private Team current;
+	public RandomChessbot(Model m) {
+		this.model = new Model(m,false);
+		this.current = m.getCurrentPlayer();
 	}
 
 	@Override
@@ -27,7 +27,7 @@ public class RandomChessbot implements Chessbot {
 		ArrayList<int[]> mypieces = new ArrayList<int[]>();
 		for(int x = 0; x < 8; x++) {
 			for(int y = 0; y < 8; y++) {
-				if(model.getPieceOn(x, y).team == this.team) {
+				if(model.getPieceOn(x, y).team == this.current) {
 					mypieces.add(new int[] {x,y});
 				}
 			}
@@ -44,19 +44,20 @@ public class RandomChessbot implements Chessbot {
 			llm.addAll(model.getLegalMoves());
 		}
 		if(llm.size() == 0) {
-			System.out.println("No possible moves");
+			//System.out.println("No possible moves");
 			return null;
 		}
 		Move m = llm.get((int)(Math.random()*(double)(llm.size())));
-		if(this.team == Team.WHITE && m.getPiece() == Piecetype.WHITE_PAWN && m.to()[1] == 0)
+		if(this.current == Team.WHITE && m.getPiece() == Piecetype.WHITE_PAWN && m.to()[1] == 0)
 			m.setPromotion(Piecetype.WHITE_QUEEN);
-		else if(this.team == Team.BLACK && m.getPiece() == Piecetype.DARK_PAWN && m.to()[1] == 7)
+		else if(this.current == Team.BLACK && m.getPiece() == Piecetype.DARK_PAWN && m.to()[1] == 7)
 			m.setPromotion(Piecetype.DARK_QUEEN);
 		return m;
 	}
 
 	@Override
 	public void recieveMove(Move m) {
+		this.current = m.getPiece().team == Team.WHITE?Team.BLACK:Team.WHITE;
 		model.move(m);
 	}
 
@@ -65,13 +66,10 @@ public class RandomChessbot implements Chessbot {
 		model.move(new Move(move));
 	}
 
-	@Override
-	public Team getTeam() {
-		return this.team;
-	}
 
 	@Override
 	public void loadfromFen(String fen) {
 		this.model.load(fen);
+		this.current = model.getCurrentPlayer();
 	}
 }
