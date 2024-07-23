@@ -129,5 +129,7 @@ public class Move {
 		return captures == other.captures && causesCheck == other.causesCheck && enpassant == other.enpassant
 				&& Arrays.equals(from, other.from) && piece == other.piece && Arrays.equals(to, other.to);
 	}
-
+	public Move clone() {
+		return new Move(new int[] {from[0], from[1]},new int[] {to[0], to[1]}, piece, captures, enpassant, causesCheck, promotes);
+	}
 }

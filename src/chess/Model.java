@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import chess.Control.Piecetype;
 import chess.Control.Piecetype.Team;
@@ -28,7 +29,7 @@ public class Model {
 	private int moves;
 	private Map<String, Integer> positions;
 	private Team currentplayer;
-
+	private Stack<String> unmakeStack;
 	public Model() {
 		this(getStartSetup(), new int[][] { { 4, 7 }, { 4, 0 } });
 		this.rochade = 0b1111;
@@ -45,9 +46,11 @@ public class Model {
 		this.positions = new HashMap<String, Integer>();
 		this.currentplayer = m.currentplayer;
 		this.moves = 1;
+		this.unmakeStack = new Stack<String>();
 		if (copyundo) {
 			this.undo.addAll(m.undo);
 			this.redo.addAll(m.redo);
+			this.unmakeStack.addAll(m.unmakeStack);
 		}
 	}
 	
@@ -58,13 +61,15 @@ public class Model {
 		this.enpassant = new int[] { -1, -1 };
 		this.undo = new LinkedList<List<Pos>>();
 		this.redo = new LinkedList<List<Pos>>();
+		this.unmakeStack = new Stack<String>();
 		this.positions = new HashMap<String, Integer>();
 		this.currentplayer = Team.WHITE;
 		Piecetype pt;
 		if (kingpositions != null) {
 			whitekingpos = new int[] { kingpositions[0][0], kingpositions[0][1] };
 			darkkingpos = new int[] { kingpositions[1][0], kingpositions[1][1] };
-		} else
+			return;
+		}
 			for (int x = 0; x < board.length; x++) {
 				for (int y = 0; y < board[x].length; y++) {
 					pt = getPieceOn(x, y);
@@ -77,13 +82,31 @@ public class Model {
 				}
 			}
 		if (whitekingpos == null || darkkingpos == null) {
+			printBoard();
 			throw new IllegalArgumentException("No " + ((whitekingpos == null) ? " White King found "
 					: ((darkkingpos == null) ? " Black King found " : "")
 							+ ((whitekingpos == null && darkkingpos == null) ? "and no Black King found" : "")));
 		}
 
 	}
-
+	public String printBoard() {
+		StringBuilder sb = new StringBuilder();
+		Piecetype pt; 
+		for (int x = 0; x < board.length; x++) {
+			sb.append((8-x)+"  ");
+			for (int y = 0; y < board[x].length; y++) {
+				pt = getPieceOn(y, x);
+				if(pt != Piecetype.EMPTY)
+					sb.append(pt.letter+" ");
+				else
+					sb.append("- ");
+			}
+			sb.append('\n');
+		}
+		sb.append("\n   a b c d e f g h \n");
+		System.out.println(sb);
+		return sb.toString();
+	}
 	/**
 	 * Chooses a new piece based on the position and gives back the type of the
 	 * piece
@@ -239,7 +262,11 @@ public class Model {
 	public int[] getChosen() {
 		return chosen;
 	}
-
+	public void unMake() {
+		if(this.unmakeStack.size() == 0)
+			return;
+		this.load(this.unmakeStack.pop());
+	}
 	/**
 	 * Translate the Arrayposition into Chess Notation
 	 * 
@@ -247,7 +274,7 @@ public class Model {
 	 * @return the position as {A-H}{1-8}
 	 */
 	public static String chessPos(int[] pos) {
-		return ((char) (65 + pos[0])) + "" + (8 - pos[1]);
+		return ((char) ('A' + pos[0])) + "" + (char)('8' - pos[1]);
 	}
 
 	/**
@@ -257,7 +284,7 @@ public class Model {
 	 * @return the position mapped to the field as [x,y]
 	 */
 	public static int[] topos(String chesspos) {
-		return new int[] { chesspos.charAt(0) - 65, chesspos.charAt(1) - '0' };
+		return new int[] { chesspos.charAt(0) - 'A', chesspos.charAt(1) - '0' };
 	}
 
 	/**
@@ -282,7 +309,7 @@ public class Model {
 	 * @param log should the move be logged in the undo log
 	 * @returns If the move was executed (false if the Move
 	 */
-	private boolean move(Move m, boolean log, boolean checkifLegal) {
+	private boolean move(Move m, boolean log, boolean checkifLegal, boolean putOnstack) {
 		int[] to = m.to();
 		int[] from = m.from();
 		LinkedList<Pos> llpos = new LinkedList<Pos>();
@@ -399,16 +426,6 @@ public class Model {
 			}
 
 		}
-		if (castled && log) {
-			pos = getFen();
-			pos = pos.substring(0, pos.indexOf(' '));
-			if (this.positions.containsKey(pos)) {
-				this.positions.replace(pos, this.positions.get(pos) + 1);
-			} else {
-				this.positions.put(pos, 1);
-			}
-			return true;
-		}
 		// Casteling Rights
 		if (from[0] == 0) {
 			if (from[1] == 0 && m.getPiece() == Piecetype.DARK_ROOK) {
@@ -455,6 +472,9 @@ public class Model {
 				this.positions.put(pos, 1);
 			}
 		}
+		if(putOnstack) {
+			this.unmakeStack.add(getFen());
+		}
 		return true;
 	}
 
@@ -465,7 +485,7 @@ public class Model {
 	 * @returns true if the move was valid an was done
 	 */
 	public boolean move(Move m) {
-		return move(m, true, true);
+		return move(m, true, true,true);
 	}
 
 	/**
@@ -475,12 +495,9 @@ public class Model {
 	 * @returns a new Board with the given move executed
 	 */
 	public Piecetype[][] trymove(Move m) {
-		int[] to = m.to();
-		int[] from = m.from();
-		Piecetype[][] pt = getBoard();
-		pt[to[0]][to[1]] = pt[from[0]][from[1]];
-		pt[from[0]][from[1]] = Piecetype.EMPTY;
-		return pt;
+		Model model = loadfromFen(getFen());
+		model.move(m, false, false, false);
+		return model.board;
 	}
 
 	
@@ -516,7 +533,9 @@ public class Model {
 			if (y != 7)
 				sb.append("/");
 		}
+		sb.append(' ');
 		sb.append(currentplayer == Team.WHITE ? " w " : " b ");
+		sb.append(' ');
 		if (rochade != 0) {
 			if ((rochade & 0b1) == 0b1) {
 				sb.append('K');
@@ -531,13 +550,15 @@ public class Model {
 				sb.append('q');
 			}
 		} else {
-			sb.append(' ');
+			sb.append('-');
 		}
+			sb.append(' ');
 		sb.append(' ');
 		if (enpassant[0] != -1 && enpassant[1] != -1) {
 			sb.append(chessPos(enpassant));
 		} else
 			sb.append('-');
+		sb.append(' ');
 		sb.append(" "+movesincePawnorcapture+" "+moves);
 		return sb.toString();
 	}
@@ -762,7 +783,7 @@ public class Model {
 		// Piecetype[][] localboard;
 		while (li.hasNext()) {
 			move = li.next();
-			model.move(move, true, false);
+			model.move(move, true, false,false);
 			if (model.isCheck(pt.team)) {
 				// System.out.println("Removing "+move.toString()+" from the possible moves as
 				// it would result in check of own king");
@@ -987,7 +1008,7 @@ public class Model {
 				if (board[x][y].team == looser) {
 					m.choose(x, y);
 					for (Move move : m.getLegalMoves()) {
-						m.move(move, true, false);
+						m.move(move, true, false,false);
 						if (!m.isCheck(looser)) {
 							return -1;
 						}
@@ -1090,6 +1111,77 @@ public class Model {
 	}
 	public Team getCurrentPlayer() {
 		return this.currentplayer;
+	}
+	public List<Move> getAllLegalMoves(boolean white){
+		Control.Piecetype.Team team = white?Team.WHITE:Team.BLACK;
+		int[] currentchosen = new int[] {this.chosen[0],this.chosen[1]};
+		ArrayList<int[]> mypieces = new ArrayList<int[]>();
+		List<Move> llm = new ArrayList<Move>();
+		for(int x = 0; x < 8; x++) {
+			for(int y = 0; y < 8; y++) {
+				if(getPieceOn(x, y).team == team) {
+					choose(x, y);
+					llm.addAll(getLegalMoves());
+				}
+			}
+		}
+		this.chosen = currentchosen;
+		if(llm.size() == 0) {
+			return llm;
+		}
+		Move move;
+		LinkedList<Move> promotions = new LinkedList<Move>();
+		for(Move m : llm) {
+			if(team == Team.WHITE && m.getPiece() == Piecetype.WHITE_PAWN && m.to()[1] == 0) {
+				m.setPromotion(Piecetype.WHITE_QUEEN);
+				move = m.clone();
+				m.setPromotion(Piecetype.WHITE_ROOK);
+				promotions.add(move);
+				move = m.clone();
+				m.setPromotion(Piecetype.WHITE_BISHOP);
+				promotions.add(move);
+				move = m.clone();
+				m.setPromotion(Piecetype.WHITE_KNIGHT);
+				promotions.add(move);
+			}
+			else if(team == Team.BLACK && m.getPiece() == Piecetype.DARK_PAWN && m.to()[1] == 7) {
+				m.setPromotion(Piecetype.DARK_QUEEN);
+				move = m.clone();
+				m.setPromotion(Piecetype.DARK_ROOK);
+				promotions.add(move);
+				move = m.clone();
+				m.setPromotion(Piecetype.DARK_BISHOP);
+				promotions.add(move);
+				move = m.clone();
+				m.setPromotion(Piecetype.DARK_KNIGHT);
+				promotions.add(move);
+			}
+		}
+		llm.addAll(promotions);
+		return llm;
+		}
+	
+	public long pertf(int depth, boolean white,boolean print) {
+		if(depth == 0)
+			return 1;
+		List<Move> moves = getAllLegalMoves(white);
+		if(depth == 1)
+			return moves.size();
+		long all = 0;
+		long one = 0;
+		Model mod;
+		String fen = getFen();
+		for(Move m : moves) {
+			mod = loadfromFen(fen);
+			mod.move(m, false, false, true);
+			one = mod.pertf(depth-1,!white,false); 
+			if(print) {
+				System.out.println(chessPos(m.from())+chessPos(m.to())+" : "+one);
+			}
+			//mod.unMake();
+			all += one;
+		}
+		return all;
 	}
 }
 
