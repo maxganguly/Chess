@@ -72,4 +72,13 @@ public class RandomChessbot implements Chessbot {
 		this.model.load(fen);
 		this.current = model.getCurrentPlayer();
 	}
+	@Override
+	public UCIMove getUCIMove() {
+		Move m = getMove();
+		return new UCIMove(Model.chessPos(m.from()), Model.chessPos(m.from()), m.getPromotion().letter);
+	}
+	@Override
+	public void recieveMove(UCIMove uci) {
+		recieveMove(model.toMove(uci));
+	}
 }

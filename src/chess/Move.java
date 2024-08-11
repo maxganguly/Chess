@@ -132,4 +132,7 @@ public class Move {
 	public Move clone() {
 		return new Move(new int[] {from[0], from[1]},new int[] {to[0], to[1]}, piece, captures, enpassant, causesCheck, promotes);
 	}
+	public UCIMove toUCI() {
+		return new UCIMove(Model.chessPos(from()), Model.chessPos(from()), getPromotion().letter);
+	}
 }

@@ -215,7 +215,6 @@ public class Model {
 				this.rochade |= 0b1000;
 				break;
 			}
-			i++;
 		}
 
 		c = fen.charAt(++i);
@@ -1182,6 +1181,21 @@ public class Model {
 			all += one;
 		}
 		return all;
+	}
+	public Move toMove(UCIMove uci) {
+		int [] from = topos(uci.from.name);
+		int [] to = topos(uci.to.name);
+		
+		Move m = new Move(from, 
+				to, 
+				getPieceOn(from[0], from[1]), 
+				getPieceOn(to[0], to[1]) == Piecetype.EMPTY,
+				(Arrays.equals(to, this.enpassant)&&(getPieceOn(from[0], from[1]).name.contains("Pawn"))),
+				false,
+				Piecetype.get(uci.promote));
+		Piecetype[][] boardnew = trymove(m);
+		m.causesCheck(isCheck(currentplayer==Team.WHITE?Team.BLACK:Team.WHITE, boardnew));
+		return m;
 	}
 }
 

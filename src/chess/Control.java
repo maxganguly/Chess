@@ -60,6 +60,40 @@ public class Control {
 			this.orthogonal = orthogonal;
 			this.special = special;
 		}
+		public static Piecetype get(String name) {
+			switch(name) {
+			case "White King": return WHITE_KING;
+			case "White Queen": return WHITE_QUEEN;
+			case "White Rook": return WHITE_ROOK;
+			case "White Bishop": return WHITE_BISHOP;
+			case "White Knight": return WHITE_KNIGHT;
+			case "White Pawn": return WHITE_PAWN;
+			case "Dark King": return DARK_KING;
+			case "Dark Queen": return DARK_QUEEN;
+			case "Dark Rook": return DARK_ROOK;
+			case "Dark Bishop": return DARK_BISHOP;
+			case "Dark Knight": return DARK_KNIGHT;
+			case "Dark Pawn": return DARK_PAWN;
+			}
+			return INVALID;
+		}
+		public static Piecetype get(char letter) {
+			switch(letter) {
+			case 'K': return WHITE_KING;
+			case 'Q': return WHITE_QUEEN;
+			case 'R': return WHITE_ROOK;
+			case 'B': return WHITE_BISHOP;
+			case 'N': return WHITE_KNIGHT;
+			case 'P': return WHITE_PAWN;
+			case 'k': return DARK_KING;
+			case 'q': return DARK_QUEEN;
+			case 'r': return DARK_ROOK;
+			case 'b': return DARK_BISHOP;
+			case 'n': return DARK_KNIGHT;
+			case 'p': return DARK_PAWN;
+			}
+			return INVALID;
+		}
 
 	};
 
