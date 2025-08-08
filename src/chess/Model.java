@@ -65,7 +65,7 @@ public class Model {
 		this.positions = new HashMap<String, Integer>();
 		this.currentplayer = Team.WHITE;
 		Piecetype pt;
-		if (kingpositions != null) {
+		if (kingpositions != null && darkkingpos != null) {
 			whitekingpos = new int[] { kingpositions[0][0], kingpositions[0][1] };
 			darkkingpos = new int[] { kingpositions[1][0], kingpositions[1][1] };
 			return;
@@ -82,20 +82,20 @@ public class Model {
 				}
 			}
 		if (whitekingpos == null || darkkingpos == null) {
-			printBoard();
+			printBoard(this.board);
 			throw new IllegalArgumentException("No " + ((whitekingpos == null) ? " White King found "
 					: ((darkkingpos == null) ? " Black King found " : "")
 							+ ((whitekingpos == null && darkkingpos == null) ? "and no Black King found" : "")));
 		}
 
 	}
-	public String printBoard() {
+	public static String printBoard(Piecetype[][] board) {
 		StringBuilder sb = new StringBuilder();
 		Piecetype pt; 
 		for (int x = 0; x < board.length; x++) {
 			sb.append((8-x)+"  ");
 			for (int y = 0; y < board[x].length; y++) {
-				pt = getPieceOn(y, x);
+				pt = board[y][x];
 				if(pt != Piecetype.EMPTY)
 					sb.append(pt.letter+" ");
 				else
@@ -283,7 +283,10 @@ public class Model {
 	 * @return the position mapped to the field as [x,y]
 	 */
 	public static int[] topos(String chesspos) {
-		return new int[] { chesspos.charAt(0) - 'A', chesspos.charAt(1) - '0' };
+		char c = chesspos.charAt(0);
+		if(c > 73 )
+			c -= 32; //Make Uppercase
+		return new int[] { c - 'A', '8'-chesspos.charAt(1)};
 	}
 
 	/**
@@ -374,6 +377,7 @@ public class Model {
 				board[4][0] = Piecetype.EMPTY;
 				darkkingpos[0] = 2;
 				darkkingpos[1] = 0;
+				return true;
 			} else if (from[0] - to[0] == -2) {
 				castled = true;
 				if (log) {
@@ -389,6 +393,7 @@ public class Model {
 				board[7][0] = Piecetype.EMPTY;
 				darkkingpos[0] = 6;
 				darkkingpos[1] = 0;
+				return true;
 			}
 		} else if (m.getPiece() == Piecetype.WHITE_KING) {
 			rochade &= 0b1100;
@@ -407,6 +412,7 @@ public class Model {
 				board[4][7] = Piecetype.EMPTY;
 				whitekingpos[0] = 2;
 				whitekingpos[1] = 7;
+				return true;
 			} else if (from[0] - to[0] == -2) {
 				castled = true;
 				if (log) {
@@ -422,6 +428,7 @@ public class Model {
 				board[7][7] = Piecetype.EMPTY;
 				whitekingpos[0] = 6;
 				whitekingpos[1] = 7;
+				return true;
 			}
 
 		}
@@ -450,7 +457,6 @@ public class Model {
 			llpos.add(new Pos(to[0], to[1], getPieceOn(to[0], to[1])));
 		// Promoting
 		if (m.getPromotion() == null) {
-
 			board[to[0]][to[1]] = board[from[0]][from[1]];
 		} else {
 			board[to[0]][to[1]] = m.getPromotion();
@@ -507,8 +513,7 @@ public class Model {
 	}
 
 	/**
-	 * Returns the FEN Notatinon of the current Does not yet count the current
-	 * number of moves
+	 * Returns the FEN Notatinon of the current Game
 	 * 
 	 * @return the FEN Notation of the current Model
 	 */
@@ -532,9 +537,9 @@ public class Model {
 			if (y != 7)
 				sb.append("/");
 		}
-		sb.append(' ');
+		//sb.append(' ');
 		sb.append(currentplayer == Team.WHITE ? " w " : " b ");
-		sb.append(' ');
+		//sb.append(' ');
 		if (rochade != 0) {
 			if ((rochade & 0b1) == 0b1) {
 				sb.append('K');
@@ -551,14 +556,14 @@ public class Model {
 		} else {
 			sb.append('-');
 		}
-			sb.append(' ');
+		//sb.append(' ');
 		sb.append(' ');
 		if (enpassant[0] != -1 && enpassant[1] != -1) {
 			sb.append(chessPos(enpassant));
 		} else
 			sb.append('-');
 		sb.append(' ');
-		sb.append(" "+movesincePawnorcapture+" "+moves);
+		sb.append(movesincePawnorcapture+" "+moves);
 		return sb.toString();
 	}
 
@@ -730,7 +735,7 @@ public class Model {
 			}
 
 		}
-		// Rochade
+		// Casteling
 		if (pt == Piecetype.DARK_KING) {
 			if ((rochade & 0b1000) == 0b1000) {
 				if (board[0][0] == Piecetype.DARK_ROOK && board[1][0] == Piecetype.EMPTY
@@ -1102,7 +1107,7 @@ public class Model {
 		Model model = new Model(this, false);
 		
 		for (Move move : model.getLegalMoves(m.from())) {
-			if (move.equalsIgnorePromotion(m))
+			if (move.aboutRight(m))
 				return true;
 		}
 		return false;

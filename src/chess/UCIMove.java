@@ -105,4 +105,17 @@ public class UCIMove {
 		else
 			this.promote = 0;
 	}
+	public static UCIMove lacntoUCI(String lacn) {
+		Square from = Square.toSquare(lacn.substring(1, 3));
+		Square to = Square.toSquare(lacn.substring(4, 6));
+		char promote =0;
+		int i = -1;
+		if((i= lacn.indexOf('/')) != -1)
+			promote = lacn.charAt(i+1);
+		return new UCIMove(from, to, promote);
+	}@Override
+	public String toString() {
+		return from.name+to.name;
+	}
+	
 }

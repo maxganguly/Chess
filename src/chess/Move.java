@@ -125,14 +125,15 @@ public class Move {
 				&& Arrays.equals(from, other.from) && piece == other.piece && promotes == other.promotes
 				&& Arrays.equals(to, other.to);
 	}
-	public boolean equalsIgnorePromotion(Move other) {
-		return captures == other.captures && causesCheck == other.causesCheck && enpassant == other.enpassant
-				&& Arrays.equals(from, other.from) && piece == other.piece && Arrays.equals(to, other.to);
+	public boolean aboutRight(Move other) {
+		return Arrays.equals(from, other.from) 
+				&& piece == other.piece 
+				&& Arrays.equals(to, other.to);
 	}
 	public Move clone() {
 		return new Move(new int[] {from[0], from[1]},new int[] {to[0], to[1]}, piece, captures, enpassant, causesCheck, promotes);
 	}
 	public UCIMove toUCI() {
-		return new UCIMove(Model.chessPos(from()), Model.chessPos(from()), getPromotion().letter);
+		return new UCIMove(Model.chessPos(from()), Model.chessPos(to()), (getPromotion()==null)?0:getPromotion().letter);
 	}
 }

@@ -20,7 +20,6 @@ public class Control {
 	private boolean playonTime;
 	private TimeCounter timeWhite, timeBlack;
 	private long[] time;
-
 	public enum Piecetype {
 		INVALID(-1, "Invalid", "\u26A0", (char) 0, Team.NONE, false, false, false),
 		EMPTY(0, "Empty Space", "", ' ', Team.NONE, false, false, false),
@@ -213,8 +212,9 @@ public class Control {
 		if (m.getPieceOn(x, y).team != currentPlayer && !v.targetofMove(x, y))
 			return;
 		int[] temp;
-
 		if (lm != null) {
+
+			
 			for (Move move : lm) {
 				temp = move.to();
 				if (temp[0] == x && temp[1] == y) {
@@ -224,8 +224,9 @@ public class Control {
 						move.setPromotion(v.promote(currentPlayer));
 					}
 
-					if (!m.move(move))
+					if (!m.move(move)) {
 						return;
+					}
 					v.playground(m.getBoard());
 					lm = null;
 					v.showMoves(lm);
@@ -249,19 +250,24 @@ public class Control {
 							else
 								gameOver(Team.BLACK, false);
 						}
+						allowPLayer = true;
 						return;
 					}
 					// MOVEOUTPUT
 					// System.out.println(move.getLacn());
 
 					if (currentPlayer == Team.WHITE && aiWhite != null) {
+						System.out.println("Calculating Black Move");
+						allowPLayer = false;
 						timeBlack.stopCounter();
 						timeWhite.startCounter();
-						// System.out.println("AI Move White");
 						aiWhite.recieveMove(move);
 						move = aiWhite.getMove();
-						if (!m.move(move))
+						System.out.println("AI Move White");
+						if (!m.move(move)) {
+							allowPLayer = true;
 							return;
+						}
 						aiWhite.recieveMove(move);
 						currentPlayer = Team.BLACK;
 						result = m.isCheckmate(currentPlayer);
@@ -271,13 +277,17 @@ public class Control {
 						timeWhite.stopCounter();
 						timeBlack.startCounter();
 					} else if (currentPlayer == Team.BLACK && aiDark != null) {
+						System.out.println("Calculating Black Move");
+						allowPLayer = false;
 						timeWhite.stopCounter();
 						timeBlack.startCounter();
-						// System.out.println("AI Move Black");
 						aiDark.recieveMove(move);
 						move = aiDark.getMove();
-						if (!m.move(move))
+						System.out.println("AI Move Black "+move.getLacn());
+						if (!m.move(move)) {
+							allowPLayer = true;
 							return;
+						}
 						aiDark.recieveMove(move);
 						currentPlayer = Team.WHITE;
 						result = m.isCheckmate(currentPlayer);
@@ -298,6 +308,7 @@ public class Control {
 						}
 					}
 
+					allowPLayer = true;
 					return;
 				}
 			}
