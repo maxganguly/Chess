@@ -40,7 +40,7 @@ public class View extends JFrame {
 	public Color white, dark, choosefield;
 
 	public View() {
-		this("Schach", 50,true);
+		this("Schach", 100,true);
 	}
 
 	public View(String name, int size, boolean timer) {
@@ -222,8 +222,10 @@ public class View extends JFrame {
 		font = font.deriveFont((float) Math.min(panel.getWidth() / width, panel.getHeight() / height));
 		for (int x = 0; x < toset.length; x++) {
 			for (int y = 0; y < toset[x].length; y++) {
+				pattern[x][y].setBackground(((x + y) % 2 == 0) ? white : dark);
 				pattern[x][y].setFont(font);
 				pattern[x][y].setText(toset[x][y].symbol);
+
 				/*
 				 * if(toset[x][y] == Piecetype.RING) { pattern[x][y].setForeground(choosefield);
 				 * }else { pattern[x][y].setForeground(new Color(51,51,51));

@@ -163,15 +163,20 @@ public class Control {
 				if (move != null && aiWhite != aiDark) {
 					currentai.recieveMove(move);
 				}
-
+				System.out.println("Current player is: "+ currentPlayer);
 				move = currentai.getMove();
+				m.move(move);
+				currentai.recieveMove(move);
+				v.playground(m.getBoard());
+				currentPlayer = (currentPlayer == Team.BLACK) ? Team.WHITE : Team.BLACK;
 				result = m.isCheckmate(currentPlayer);
+				System.out.println(result);
 				if (move == null) {
 					System.out.println(result);
 				}
 				if (m.draw())
 					result = 0;
-
+				
 				if (result != -1) {
 					if (result == 0) {
 						gameOver(Team.NONE, false);
@@ -185,16 +190,13 @@ public class Control {
 				}
 				// MOVEOUTPUT
 				// System.out.println(move.getLacn());
-				m.move(move);
-				currentai.recieveMove(move);
-				v.playground(m.getBoard());
 				if(playonTime) {
 					currenttimer.stopCounter();
 				}
-				currentPlayer = (currentPlayer == Team.BLACK) ? Team.WHITE : Team.BLACK;
+				//Pause to see the moves if the bot moves to fast
 				/*
 				try {
-					Thread.sleep(10000);
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				} //
@@ -255,7 +257,7 @@ public class Control {
 					}
 					// MOVEOUTPUT
 					// System.out.println(move.getLacn());
-
+					v.playground(m.getBoard());
 					if (currentPlayer == Team.WHITE && aiWhite != null) {
 						System.out.println("Calculating Black Move");
 						allowPLayer = false;
@@ -319,6 +321,7 @@ public class Control {
 	}
 
 	public void restart() {
+		System.out.println("Restarting");
 		m.load(startFEN);
 		if (aiWhite != null)
 			aiWhite.loadfromFen(startFEN);
@@ -328,6 +331,7 @@ public class Control {
 			v.playground(m.getBoard());
 		currentPlayer = Team.WHITE;
 		end = false;
+		v.playground(m.getBoard());
 	}
 
 	// *
@@ -357,7 +361,10 @@ public class Control {
 		}
 		if (Winner == Team.NONE) {
 			System.out.println("Draw");
-			v.gameOver(Winner);
+			if(v.gameOver(Winner) == 0) {
+				this.restart();
+			}
+			
 			return;
 		}
 		if (Winner == Team.BLACK) {
@@ -370,8 +377,9 @@ public class Control {
 				System.out.println("White Won on Time");
 			else
 				System.out.println("White won via Checkmate");
+		}if(v.gameOver(Winner) == 0) {
+			this.restart();
 		}
-		v.gameOver(Winner);
 		return;
 	}
 	// */

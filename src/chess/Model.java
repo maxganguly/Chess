@@ -316,9 +316,10 @@ public class Model {
 		int[] from = m.from();
 		LinkedList<Pos> llpos = new LinkedList<Pos>();
 		if (checkifLegal)
-			if (!isLegalMove(m) || (m.getPiece().team != currentplayer)) {
+			if (m.getPiece().team != currentplayer) {
 				if (!isLegalMove(m)) {
 					System.out.println(m.toString() + " is an Illegal Move");
+					System.out.println(this.getFen());
 					int x = 0;
 					int y = 1/x;
 					
