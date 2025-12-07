@@ -13,3 +13,4 @@ Contents:
 | Chessbot.java  | An Interface to define what Methods an Chessbot has to have  |
 | RandomChessbot.java  | An Example Chessbot will always give an random Move out of all possible Moves  |
 
+The mate in 2/3/4 are extracted from https://wtharvey.com/
